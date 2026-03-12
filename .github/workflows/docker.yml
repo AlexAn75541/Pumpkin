@@ -13,7 +13,7 @@ on:
 
 jobs:
   docker-build-deploy:
-    if: github.repository == 'Pumpkin-MC/Pumpkin'
+    if: github.repository == 'AlexAn75541/Pumpkin'
     permissions:
       contents: read
       packages: write
@@ -23,10 +23,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-24.04-arm
+          - os: debian-24.04-arm
             platform: linux/arm64
-          - os: ubuntu-latest
+          - os: debian-latest
             platform: linux/amd64
+          - os: debian-latest
+            platform: linux/arm/v7
 
     runs-on: ${{matrix.os}}
 
@@ -42,6 +44,9 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Login to GitHub CR
         uses: docker/login-action@v4
@@ -83,7 +88,7 @@ jobs:
           retention-days: 1
 
   merge:
-    if: github.repository == 'Pumpkin-MC/Pumpkin'
+    if: github.repository == 'AlexAn75541/Pumpkin'
     permissions:
       contents: read
       packages: write
