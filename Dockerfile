@@ -1,8 +1,9 @@
-FROM rust:1-alpine3.23 AS builder
-ENV RUSTFLAGS="-C target-feature=-crt-static"
-RUN apk add --no-cache musl-dev \
+FROM rust:1-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
     # Required for git-version
-    git
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /pumpkin
 COPY . /pumpkin
@@ -16,7 +17,7 @@ RUN --mount=type=cache,sharing=private,target=/pumpkin/target \
     --mount=type=cache,target=/usr/local/cargo/registry/ \
     cargo build --release && cp target/release/pumpkin ./pumpkin.release
 
-FROM alpine:3.23
+FROM debian:bookworm-slim
 
 COPY --from=builder /pumpkin/pumpkin.release /bin/pumpkin
 
@@ -25,7 +26,12 @@ COPY --from=builder /pumpkin/pumpkin.release /bin/pumpkin
 # executable (without requiring an `docker cp`-ing the binary to the host folder)
 WORKDIR /pumpkin
 
-RUN apk add --no-cache libgcc && chown 2613:2613 .
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgcc-s1 \
+    netcat-openbsd \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && chown 2613:2613 .
 
 ENV RUST_BACKTRACE=1
 EXPOSE 25565
